@@ -47,13 +47,13 @@ def get_shows(url,isTitle=False):
         html  = requests.get(tmpUrl).text.encode('utf-8')
         plugin.log.debug('%s'%tmpUrl)
         plugin.log.debug('%s'%html)
-        shows = common.parseDOM(html,'div',attrs={'class':'col-md-4'})
+        shows = common.parseDOM(html,'div',attrs={'class':'entete'})
         if not shows : 
             shows = common.parseDOM(html,'div',attrs={'class':'col-md-2 col-sm-3 col-xs-6'})
         if shows :
             for show in shows :
                 show_url = common.parseDOM(show,'a',ret='href')[0]
-                show_img = 'http:%s' %(common.parseDOM(show,'img',ret='src')[0])
+                show_img = common.parseDOM(show,'img',ret='src')[0]
                 if isTitle :
                     show_name = common.parseDOM(show,'img',ret='alt')[0]
                 else :
@@ -77,12 +77,14 @@ def get_episodes(url):
     html  = requests.get(url).text
     plugin.log.debug(url)
     plugin.log.debug(html.encode('utf-8'))
-    all   = common.parseDOM(html,'div',attrs={'class':'all-videos'})[0]
-    epi_s = common.parseDOM(all,'li',attrs={'class':'col-md-3'})
+    all   = common.parseDOM(html,'div',attrs={'class':'bloc bloc_listing bloc_listingMore'})
+    epi_s = common.parseDOM(all,'li',attrs={'class':'col-md-4 col-sm-6'})
     for epi in epi_s :
         epi_url  = common.parseDOM(epi,'a',ret='href')[0]
-        epi_img  = 'http:%s' %(common.parseDOM(epi,'img',ret='src')[0])
-        epi_name = common.parseDOM(epi,'span',attrs={'class':'title'})[0]
+        epi_img  = common.parseDOM(epi,'img',ret='src')[0]
+        epi_name = common.parseDOM(epi,'span',attrs={'class':'episodetitre'})[0]
+        epi_info = common.parseDOM(epi,'span',attrs={'class':'infos'})[0]
+	epi_name = epi_info+": "+epi_name
         epi_name = common.replaceHTMLCodes(epi_name)
         epi_name = common.stripTags(epi_name).encode('utf-8')
         epi_name = epi_name.replace('\n',' : ').replace('  ','')
@@ -94,7 +96,7 @@ def get_episodes(url):
         items.append({'label':epi_name,'path':plugin.url_for('play_video',url=epi_url),'icon':epi_img,'thumbnail':epi_img,'properties':{'Fanart_Image':__addon__.getAddonInfo('fanart')},'is_playable':True})
     plugin.set_content('tvshows')
     return items
-
+  
 @plugin.route('/play_video/<url>/')
 def play_video(url):
     plugin.log.debug('play_video(%s)'%(url))
